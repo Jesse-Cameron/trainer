@@ -1,16 +1,19 @@
 use anyhow::{anyhow, bail, Result};
-use embedded_svc::wifi::{
-    AccessPointConfiguration, AuthMethod, ClientConfiguration, Configuration,
+use esp_idf_svc::{
+    eventloop::EspSystemEventLoop,
+    hal::peripheral,
+    nvs::EspDefaultNvsPartition,
+    wifi::{
+        AccessPointConfiguration, AuthMethod, BlockingWifi, ClientConfiguration, Configuration,
+        EspWifi,
+    },
 };
-use esp_idf_hal::peripheral;
-use esp_idf_svc::nvs::EspDefaultNvsPartition;
-use esp_idf_svc::{eventloop::EspSystemEventLoop, wifi::BlockingWifi, wifi::EspWifi};
 use log::{info, warn};
 
 pub fn wifi(
     ssid: &str,
     pass: &str,
-    modem: impl peripheral::Peripheral<P = esp_idf_hal::modem::Modem> + 'static,
+    modem: impl peripheral::Peripheral<P = esp_idf_svc::hal::modem::Modem> + 'static,
     sysloop: EspSystemEventLoop,
 ) -> Result<Box<EspWifi<'static>>> {
     let mut auth_method = AuthMethod::WPA2Personal;
