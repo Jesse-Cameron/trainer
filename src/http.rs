@@ -1,10 +1,7 @@
 // use anyhow::Error;
 // use anyhow::Result;
 use embedded_svc::{
-    http::{
-        client::Client,
-        Method,
-    },
+    http::{client::Client, Method},
     utils::io,
 };
 use esp_idf_svc::http::client::{Configuration, EspHttpConnection};
@@ -14,9 +11,7 @@ trait HttpClient {
     fn get() {}
 }
 
-pub fn get(
-    url: impl AsRef<str>,
-) -> anyhow::Result<String> {
+pub fn get<'a>(url: impl AsRef<str>, headers: &'a [(&'a str, &'a str)]) -> anyhow::Result<String> {
     // create a https client
     let connection = EspHttpConnection::new(&Configuration {
         use_global_ca_store: true,
@@ -27,9 +22,7 @@ pub fn get(
     let mut client = Client::wrap(connection);
     info!("https client created");
 
-
-    let headers = [("x-api-key", "snip")];
-    let request = client.request(Method::Get, url.as_ref(), &headers)?;
+    let request = client.request(Method::Get, url.as_ref(), headers)?;
     info!("request created");
 
     let response = request.submit()?;

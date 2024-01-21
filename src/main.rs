@@ -19,6 +19,14 @@ pub struct Config {
     wifi_ssid: &'static str,
     #[default("")]
     wifi_psk: &'static str,
+    #[default("")]
+    lambda_api_key: &'static str,
+    #[default("localhost")]
+    lambda_hostname: &'static str,
+    #[default("thornbury")]
+    station_name: &'static str,
+    #[default(1000)]
+    request_interval_ms: u64,
 }
 
 fn main() -> Result<()> {
@@ -60,13 +68,20 @@ fn main() -> Result<()> {
         std::thread::sleep(std::time::Duration::from_millis(1000));
         info!("Hello, world!");
 
+        let headers = [("x-api-key", app_config.lambda_api_key)];
         let _body = http::get(
-            "https://www.espressif.com",
+            format!(
+                "{}/departures?station_name={}",
+                app_config.lambda_hostname, app_config.station_name
+            ),
+            &headers,
         )?;
 
         // Green!
         led.set_pixel(RGB8::new(0, 50, 0))?;
         // Wait...
-        std::thread::sleep(std::time::Duration::from_millis(1000));
+        std::thread::sleep(std::time::Duration::from_millis(
+            app_config.request_interval_ms,
+        ));
     }
 }

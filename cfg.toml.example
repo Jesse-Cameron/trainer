@@ -1,0 +1,6 @@
+[trainer]
+wifi_ssid = ""
+wifi_psk = ""
+lambda_api_key = ""
+lambda_hostname = ""
+
