@@ -69,13 +69,15 @@ fn main() -> Result<()> {
         info!("Hello, world!");
 
         let headers = [("x-api-key", app_config.lambda_api_key)];
-        let _body = http::get(
+        let body = http::get(
             format!(
                 "{}/departures?station_name={}",
                 app_config.lambda_hostname, app_config.station_name
             ),
             &headers,
         )?;
+
+        info!("{}",body);
 
         // Green!
         led.set_pixel(RGB8::new(0, 50, 0))?;

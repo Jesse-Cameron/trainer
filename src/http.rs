@@ -7,12 +7,22 @@ use embedded_svc::{
 use esp_idf_svc::http::client::{Configuration, EspHttpConnection};
 use log::info;
 
-trait HttpClient {
-    fn get() {}
+pub fn get<'a>(url: String, headers: &'a [(&'a str, &'a str)]) -> anyhow::Result<String> {
+    let mut res = Ok("".to_string());
+    for _i in 1..3 {
+        res = get_internal(url.clone(), headers);
+
+        if res.is_ok() {
+            return res;
+        }
+    }
+    res
 }
 
-pub fn get<'a>(url: impl AsRef<str>, headers: &'a [(&'a str, &'a str)]) -> anyhow::Result<String> {
-    // create a https client
+fn get_internal<'a>(
+    url: impl AsRef<str>,
+    headers: &'a [(&'a str, &'a str)],
+) -> anyhow::Result<String> {
     let connection = EspHttpConnection::new(&Configuration {
         use_global_ca_store: true,
         crt_bundle_attach: Some(esp_idf_svc::sys::esp_crt_bundle_attach),
@@ -20,14 +30,8 @@ pub fn get<'a>(url: impl AsRef<str>, headers: &'a [(&'a str, &'a str)]) -> anyho
     })?;
 
     let mut client = Client::wrap(connection);
-    info!("https client created");
-
     let request = client.request(Method::Get, url.as_ref(), headers)?;
-    info!("request created");
-
     let response = request.submit()?;
-    info!("request submitted");
-    // TODO(jcam): should we do some retries here?
     let status = response.status();
     info!("status: {}", status);
 
@@ -41,7 +45,12 @@ pub fn get<'a>(url: impl AsRef<str>, headers: &'a [(&'a str, &'a str)]) -> anyho
 
     let res_body = std::str::from_utf8(&buf[0..bytes_read]).map(|s| s.to_string())?;
 
-    info!("{}", res_body);
-
-    Ok(res_body)
+    if (200..=299).contains(&status) {
+        Ok(res_body)
+    } else {
+        Err(anyhow::Error::msg(format!(
+            "could not reach endpoint. status: {}. message: {}",
+            status, res_body
+        )))
+    }
 }
