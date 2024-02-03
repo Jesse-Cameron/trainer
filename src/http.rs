@@ -1,5 +1,3 @@
-// use anyhow::Error;
-// use anyhow::Result;
 use embedded_svc::{
     http::{client::Client, Method},
     utils::io,
@@ -43,10 +41,10 @@ fn get_internal<'a>(
     // Drain the remaining response bytes
     while reader.read(&mut buf)? > 0 {}
 
-    let res_body = std::str::from_utf8(&buf[0..bytes_read]).map(|s| s.to_string())?;
+    let res_body = std::str::from_utf8(&buf[0..bytes_read])?;
 
     if (200..=299).contains(&status) {
-        Ok(res_body)
+        Ok(res_body.to_string())
     } else {
         Err(anyhow::Error::msg(format!(
             "could not reach endpoint. status: {}. message: {}",

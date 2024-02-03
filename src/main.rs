@@ -7,6 +7,7 @@ use log::*;
 mod http;
 mod led;
 mod wifi;
+mod departures;
 
 use crate::led::{RGB8, WS2812RMT};
 use crate::wifi::wifi;
@@ -78,6 +79,12 @@ fn main() -> Result<()> {
         )?;
 
         info!("{}",body);
+
+        let d = serde_json::from_str::<departures::Departures>(&body)?;
+
+        let to_departure =  d.to_city_departures.first().map(|x| x.minutes);
+
+        info!("first to departure: {}", to_departure.unwrap_or(0)); //TODO(jcam): better handling
 
         // Green!
         led.set_pixel(RGB8::new(0, 50, 0))?;
