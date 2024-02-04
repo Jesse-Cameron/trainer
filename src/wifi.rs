@@ -10,6 +10,8 @@ use esp_idf_svc::{
 };
 use log::{info, warn};
 
+const RETRY_DELAY_MS: u64 = 2000;
+
 pub fn wifi(
     ssid: &str,
     pass: &str,
@@ -46,20 +48,20 @@ pub fn wifi(
         if ap_infos.is_empty() {
             info!("no access points found, retrying");
         } else {
-            scan_counter = 5;
+            break;
         }
 
         scan_counter += 1;
     }
 
-    let ours = ap_infos.into_iter().find(|a| a.ssid == ssid);
+    let maybe_ap_info = ap_infos.into_iter().find(|a| a.ssid == ssid);
 
-    let channel = if let Some(ours) = ours {
+    let channel = if let Some(ap_info) = maybe_ap_info {
         info!(
             "Found configured access point {} on channel {}",
-            ssid, ours.channel
+            ssid, ap_info.channel
         );
-        Ok(ours.channel)
+        Ok(ap_info.channel)
     } else {
         warn!("configured access point {} not found during scanning", ssid);
         Err(anyhow!("could not find access point"))
@@ -82,7 +84,24 @@ pub fn wifi(
 
     info!("Connecting wifi...");
 
-    wifi.connect()?;
+    let mut connect_counter = 0;
+
+    while connect_counter < 5 {
+        match wifi.connect() {
+            Ok(()) => break,
+            Err(err) => {
+                warn!(
+                    "Wifi connect failed, reason {}, retrying in {}s",
+                    err,
+                    RETRY_DELAY_MS / 1000
+                );
+                sleep_ms(RETRY_DELAY_MS);
+                wifi.stop()?;
+                wifi.start()?;
+            }
+        }
+        connect_counter += 1;
+    }
 
     info!("Waiting for DHCP lease...");
 
@@ -93,4 +112,8 @@ pub fn wifi(
     info!("Wifi DHCP info: {:?}", ip_info);
 
     Ok(Box::new(esp_wifi))
+}
+
+fn sleep_ms(ms: u64) {
+    std::thread::sleep(std::time::Duration::from_millis(ms))
 }
