@@ -4,10 +4,10 @@ use esp_idf_svc::hal::prelude::Peripherals;
 // use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use log::*;
 
+mod departures;
 mod http;
 mod led;
 mod wifi;
-mod departures;
 
 use crate::led::{RGB8, WS2812RMT};
 use crate::wifi::wifi;
@@ -67,7 +67,6 @@ fn main() -> Result<()> {
         led.set_pixel(RGB8::new(0, 0, 50))?;
         // Wait...
         std::thread::sleep(std::time::Duration::from_millis(1000));
-        info!("Hello, world!");
 
         let headers = [("x-api-key", app_config.lambda_api_key)];
         let body = http::get(
@@ -78,11 +77,11 @@ fn main() -> Result<()> {
             &headers,
         )?;
 
-        info!("{}",body);
+        info!("{}", body);
 
         let d = serde_json::from_str::<departures::Departures>(&body)?;
 
-        let to_departure =  d.to_city_departures.first().map(|x| x.minutes);
+        let to_departure = d.to_city_departures.first().map(|x| x.minutes);
 
         info!("first to departure: {}", to_departure.unwrap_or(0)); //TODO(jcam): better handling
 

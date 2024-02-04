@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use embedded_svc::{
     http::{client::Client, Method},
     utils::io,
@@ -46,9 +47,10 @@ fn get_internal<'a>(
     if (200..=299).contains(&status) {
         Ok(res_body.to_string())
     } else {
-        Err(anyhow::Error::msg(format!(
+        Err(anyhow!(
             "could not reach endpoint. status: {}. message: {}",
-            status, res_body
-        )))
+            status,
+            res_body
+        ))
     }
 }

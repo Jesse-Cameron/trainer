@@ -34,8 +34,8 @@ embedded-svc = { version = "0.26.4", default-features = false}
 anyhow = "1.0"
 toml-cfg = "0.1"
 rgb = "0.8"
-serde = "1.0.196"
-serde_json = "1.0.113"
+serde = "1.0"
+serde_json = "1.0"
 
 [build-dependencies]
 anyhow = "1.0"
