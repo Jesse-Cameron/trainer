@@ -3,13 +3,17 @@ use embedded_svc::{
     http::{client::Client, Method},
     utils::io,
 };
-use esp_idf_svc::http::client::{Configuration, EspHttpConnection};
+use esp_idf_svc::http::client::EspHttpConnection;
 use log::info;
 
-pub fn get<'a>(url: String, headers: &'a [(&'a str, &'a str)]) -> anyhow::Result<String> {
-    let mut res = Ok("".to_string());
+pub fn get<'a>(
+    client: &mut Client<EspHttpConnection>,
+    url: String,
+    headers: &'a [(&'a str, &'a str)],
+) -> anyhow::Result<impl AsRef<str>> {
+    let res = Err(anyhow!("error should not be reached"));
     for _i in 1..3 {
-        res = get_internal(url.clone(), headers);
+        let res = get_internal(client, url.clone(), headers);
 
         if res.is_ok() {
             return res;
@@ -19,16 +23,10 @@ pub fn get<'a>(url: String, headers: &'a [(&'a str, &'a str)]) -> anyhow::Result
 }
 
 fn get_internal<'a>(
+    client: &mut Client<EspHttpConnection>,
     url: impl AsRef<str>,
     headers: &'a [(&'a str, &'a str)],
-) -> anyhow::Result<String> {
-    let connection = EspHttpConnection::new(&Configuration {
-        use_global_ca_store: true,
-        crt_bundle_attach: Some(esp_idf_svc::sys::esp_crt_bundle_attach),
-        ..Default::default()
-    })?;
-
-    let mut client = Client::wrap(connection);
+) -> anyhow::Result<impl AsRef<str>> {
     let request = client.request(Method::Get, url.as_ref(), headers)?;
     let response = request.submit()?;
     let status = response.status();
