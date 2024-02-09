@@ -1,6 +1,8 @@
 use anyhow::{bail, Result};
+use embedded_svc::http::client::Client;
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::prelude::Peripherals;
+use esp_idf_svc::http::client::{Configuration, EspHttpConnection};
 // use esp_idf_sys as _; // If using the `binstart` feature of `esp-idf-sys`, always keep this module imported
 use log::*;
 
@@ -62,14 +64,22 @@ fn main() -> Result<()> {
         }
     };
 
+    // create a http connection
+    let connection = EspHttpConnection::new(&Configuration {
+        use_global_ca_store: true,
+        crt_bundle_attach: Some(esp_idf_svc::sys::esp_crt_bundle_attach),
+        ..Default::default()
+    })?;
+
+    let mut client = Client::wrap(connection);
+
     loop {
         // Blue!
         led.set_pixel(RGB8::new(0, 0, 50))?;
-        // Wait...
-        std::thread::sleep(std::time::Duration::from_millis(1000));
 
         let headers = [("x-api-key", app_config.lambda_api_key)];
-        let body = http::get(
+        let res = http::get(
+            &mut client,
             format!(
                 "{}/departures?station_name={}",
                 app_config.lambda_hostname, app_config.station_name
@@ -77,9 +87,7 @@ fn main() -> Result<()> {
             &headers,
         )?;
 
-        info!("{}", body);
-
-        let d = serde_json::from_str::<departures::Departures>(&body)?;
+        let d = serde_json::from_str::<departures::Departures>(res.as_ref())?;
 
         let to_departure = d.to_city_departures.first().map(|x| x.minutes);
 

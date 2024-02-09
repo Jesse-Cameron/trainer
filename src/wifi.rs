@@ -1,4 +1,5 @@
 use anyhow::{anyhow, bail, Result};
+use embedded_svc::wifi::AccessPointInfo;
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
     hal::peripheral,
