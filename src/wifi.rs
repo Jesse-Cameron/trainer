@@ -46,7 +46,12 @@ pub fn wifi(
 
     while scan_counter < 5 {
         ap_infos = wifi.scan()?;
-        if ap_infos.is_empty() {
+        let filtered_aps = ap_infos
+            .iter()
+            .filter(|ap| ap.ssid == ssid)
+            .map(|ap| ap.to_owned())
+            .collect::<Vec<AccessPointInfo>>();
+        if filtered_aps.is_empty() {
             info!("no access points found, retrying");
         } else {
             break;

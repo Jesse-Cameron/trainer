@@ -28,7 +28,7 @@ pub struct Config {
     lambda_hostname: &'static str,
     #[default("thornbury")]
     station_name: &'static str,
-    #[default(1000)]
+    #[default(10000)]
     request_interval_ms: u64,
 }
 

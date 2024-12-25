@@ -29,6 +29,7 @@ fn get_internal<'a>(
 ) -> anyhow::Result<impl AsRef<str>> {
     let request = client.request(Method::Get, url.as_ref(), headers)?;
     let response = request.submit()?;
+    // TODO: maybe we should wait here
     let status = response.status();
     info!("status: {}", status);
 
