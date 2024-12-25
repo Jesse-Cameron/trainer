@@ -28,7 +28,7 @@ pub struct Config {
     lambda_hostname: &'static str,
     #[default("thornbury")]
     station_name: &'static str,
-    #[default(1000)]
+    #[default(10000)]
     request_interval_ms: u64,
 }
 
@@ -65,11 +65,15 @@ fn main() -> Result<()> {
     };
 
     // create a http connection
-    let connection = EspHttpConnection::new(&Configuration {
+    let config = Configuration {
         use_global_ca_store: true,
         crt_bundle_attach: Some(esp_idf_svc::sys::esp_crt_bundle_attach),
+        timeout: Some(std::time::Duration::from_secs(10)),
         ..Default::default()
-    })?;
+    };
+    let connection = EspHttpConnection::new(&config)?;
+
+    info!("default timeout: {:?}", config.timeout);
 
     let mut client = Client::wrap(connection);
 
