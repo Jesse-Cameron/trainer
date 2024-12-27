@@ -9,5 +9,4 @@ pub struct Minutes {
 #[serde(rename_all = "camelCase")]
 pub struct Departures {
     pub to_city_departures: Vec<Minutes>,
-    pub from_city_departures: Vec<Minutes>,
 }
