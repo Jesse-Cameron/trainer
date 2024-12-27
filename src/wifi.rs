@@ -3,10 +3,7 @@ use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
     hal::peripheral,
     nvs::EspDefaultNvsPartition,
-    wifi::{
-        AccessPointConfiguration, AuthMethod, BlockingWifi, ClientConfiguration, Configuration,
-        EspWifi,
-    },
+    wifi::{AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi},
 };
 use log::{info, warn};
 
@@ -64,23 +61,21 @@ pub fn wifi(
         Ok(ap_info.channel)
     } else {
         warn!("configured access point {} not found during scanning", ssid);
+        // TODO: we could return None here and progress anyway, it should be safe
         Err(anyhow!("could not find access point"))
     }?;
 
-    wifi.set_configuration(&Configuration::Mixed(
-        ClientConfiguration {
-            ssid: ssid.into(),
-            password: pass.into(),
-            channel: Some(channel),
-            auth_method,
-            ..Default::default()
-        },
-        AccessPointConfiguration {
-            ssid: "aptest".into(),
-            channel,
-            ..Default::default()
-        },
-    ))?;
+    wifi.set_configuration(&Configuration::Client(ClientConfiguration {
+        ssid: ssid
+            .try_into()
+            .expect("Could not parse the given SSID into WiFi config"),
+        password: pass
+            .try_into()
+            .expect("Could not parse the given password into WiFi config"),
+        channel: Some(channel),
+        auth_method,
+        ..Default::default()
+    }))?;
 
     info!("Connecting wifi...");
 
