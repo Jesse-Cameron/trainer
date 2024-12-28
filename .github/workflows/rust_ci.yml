@@ -35,5 +35,9 @@ jobs:
         with:
           toolchain: nightly
           components: rust-src
+      - name: Install ldproxy
+        run: cargo install ldproxy
+      - name: Setup config
+        run: cp cfg.toml.example cfg.toml
       - name: Run command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
