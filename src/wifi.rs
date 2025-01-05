@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{bail, Result};
 use esp_idf_svc::{
     eventloop::EspSystemEventLoop,
     hal::peripheral,
@@ -29,53 +29,21 @@ pub fn wifi(
 
     let mut wifi = BlockingWifi::wrap(&mut esp_wifi, sysloop)?;
 
-    wifi.set_configuration(&Configuration::Client(ClientConfiguration::default()))?;
-
-    info!("Starting wifi...");
-
-    wifi.start()?;
-
-    info!("Scanning...");
-
-    let mut scan_counter = 0;
-    let mut ap_infos = vec![];
-
-    while scan_counter < 5 {
-        ap_infos = wifi.scan()?;
-        if ap_infos.is_empty() {
-            info!("no access points found, retrying");
-        } else {
-            break;
-        }
-
-        scan_counter += 1;
-    }
-
-    let maybe_ap_info = ap_infos.into_iter().find(|a| a.ssid == ssid);
-
-    let channel = if let Some(ap_info) = maybe_ap_info {
-        info!(
-            "Found configured access point {} on channel {}",
-            ssid, ap_info.channel
-        );
-        Ok(ap_info.channel)
-    } else {
-        warn!("configured access point {} not found during scanning", ssid);
-        // TODO: we could return None here and progress anyway, it should be safe
-        Err(anyhow!("could not find access point"))
-    }?;
-
     wifi.set_configuration(&Configuration::Client(ClientConfiguration {
         ssid: ssid
             .try_into()
             .expect("Could not parse the given SSID into WiFi config"),
+        bssid: None,
         password: pass
             .try_into()
             .expect("Could not parse the given password into WiFi config"),
-        channel: Some(channel),
+        channel: None,
         auth_method,
         ..Default::default()
     }))?;
+
+    wifi.start()?;
+    info!("Wifi started");
 
     info!("Connecting wifi...");
 
